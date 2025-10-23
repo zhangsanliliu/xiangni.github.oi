@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 无限爱心弹窗 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #FFE4E1, #FFB6C1);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(255, 20, 147, 0.3);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            text-align: center;
+            max-width: 90vw;
+        }
+
+        .title {
+            font-size: 24px;
+            color: #FF1493;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #FF69B4, #FF1493);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.4);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 20, 147, 0.6);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .button.stop {
+            background: linear-gradient(45deg, #DC143C, #B22222);
+        }
+
+        .status {
+            margin: 15px 0;
+            font-size: 18px;
+            color: #8B008B;
+            font-weight: bold;
+        }
+
+        .count {
+            font-size: 16px;
+            color: #8B008B;
+            margin: 10px 0;
+        }
+
+        .popup {
+            position: absolute;
+            background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+            border: 3px solid #FF69B4;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(255, 20, 147, 0.4);
+            z-index: 100;
+            animation: popupAnimation 0.5s ease-out;
+            cursor: pointer;
+            user-select: none;
+            min-width: 150px;
+            max-width: 250px;
+        }
+
+        .popup-content {
+            text-align: center;
+            color: #DC143C;
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.4;
+        }
+
+        .popup-hearts {
+            font-size: 20px;
+            margin-top: 5px;
+        }
+
+        @keyframes popupAnimation {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .popup:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 20, 147, 0.6);
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(255, 20, 147, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            max-width: 90vw;
+            font-size: 14px;
+            color: #8B008B;
+            text-align: center;
+        }
+
+        .mobile-optimized {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .control-panel {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .button {
+                padding: 12px 20px;
+                font-size: 14px;
+                margin: 5px;
+            }
+            
+            .popup {
+                min-width: 120px;
+                max-width: 200px;
+                padding: 10px;
+            }
+            
+            .popup-content {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <div class="title">💕 无限爱心弹窗 💕</div>
+        
+        <button id="startBtn" class="button" onclick="startPopups()">
+            🚀 开始无限弹窗
+        </button>
+        
+        <button id="stopBtn" class="button stop" onclick="stopPopups()" disabled>
+            ⏹️ 停止弹窗
+        </button>
+        
+        <div class="status" id="status">状态: 未开始</div>
+        <div class="count" id="count">弹窗数量: 0</div>
+    </div>
+
+    <div class="info-panel">
+        <div>📱 手机优化版本 - 触摸屏幕开始体验</div>
+        <div class="mobile-optimized">
+            • 自适应屏幕尺寸 • 流畅动画效果 • 内存优化管理
+        </div>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let popupCount = 0;
+        let popupInterval = null;
+        let popups = [];
+
+        function createPopup() {
+            if (!isRunning) return;
+
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            
+            // 随机位置
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const popupWidth = Math.min(200, screenWidth / 4);
+            const popupHeight = 80;
+            
+            const x = Math.random() * (screenWidth - popupWidth);
+            const y = Math.random() * (screenHeight - popupHeight);
+            
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            popup.style.width = popupWidth + 'px';
+            
+            // 随机内容
+            const messages = [
+                '我想你了! 💕',
+                '我爱你! 💖',
+                '好想你! 💝',
+                '想见你! 💗',
+                '爱你哦! 💘'
+            ];
+            
+            const hearts = ['💖', '💕', '💗', '💝', '💘'];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            const randomHearts = hearts[Math.floor(Math.random() * hearts.length)];
+            
+            popup.innerHTML = `
+                <div class="popup-content">
+                    ${randomMessage}
+                    <div class="popup-hearts">${randomHearts} ${randomHearts} ${randomHearts}</div>
+                </div>
+            `;
+            
+            // 点击关闭
+            popup.onclick = function() {
+                this.style.animation = 'popupAnimation 0.3s ease-in reverse';
+                setTimeout(() => {
+                    if (this.parentNode) {
+                        this.parentNode.removeChild(this);
+                    }
+                }, 300);
+            };
+            
+            document.body.appendChild(popup);
+            popups.push(popup);
+            
+            // 自动关闭
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.style.animation = 'popupAnimation 0.3s ease-in reverse';
+                    setTimeout(() => {
+                        if (popup.parentNode) {
+                            popup.parentNode.removeChild(popup);
+                        }
+                    }, 300);
+                }
+            }, 3000);
+            
+            popupCount++;
+            document.getElementById('count').textContent = `弹窗数量: ${popupCount}`;
+        }
+
+        function startPopups() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('status').textContent = '状态: 正在运行';
+            
+            // 每0.5秒创建一个弹窗
+            popupInterval = setInterval(createPopup, 500);
+            
+            // 立即创建第一个弹窗
+            createPopup();
+        }
+
+        function stopPopups() {
+            if (!isRunning) return;
+            
+            isRunning = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').textContent = '状态: 已停止';
+            
+            if (popupInterval) {
+                clearInterval(popupInterval);
+                popupInterval = null;
+            }
+            
+            // 清理所有弹窗
+            popups.forEach(popup => {
+                if (popup.parentNode) {
+                    popup.style.animation = 'popupAnimation 0.3s ease-in reverse';
+                    setTimeout(() => {
+                        if (popup.parentNode) {
+                            popup.parentNode.removeChild(popup);
+                        }
+                    }, 300);
+                }
+            });
+            popups = [];
+        }
+
+        // 触摸优化
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.classList.contains('popup')) {
+                e.preventDefault();
+            }
+        });
+
+        // 防止页面滚动
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        // 响应式处理
+        window.addEventListener('resize', function() {
+            if (isRunning) {
+                // 重新计算弹窗位置
+                popups.forEach(popup => {
+                    if (popup.parentNode) {
+                        const screenWidth = window.innerWidth;
+                        const screenHeight = window.innerHeight;
+                        const popupWidth = Math.min(200, screenWidth / 4);
+                        
+                        const x = Math.random() * (screenWidth - popupWidth);
+                        const y = Math.random() * (screenHeight - 80);
+                        
+                        popup.style.left = x + 'px';
+                        popup.style.top = y + 'px';
+                        popup.style.width = popupWidth + 'px';
+                    }
+                });
+            }
+        });
+
+        // 页面加载完成后的提示
+        window.addEventListener('load', function() {
+            console.log('💕 无限爱心弹窗已加载完成！');
+            console.log('📱 手机优化版本，支持触摸操作');
+        });
+    </script>
+</body>
+</html>
